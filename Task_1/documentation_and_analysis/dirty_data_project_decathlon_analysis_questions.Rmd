@@ -1,0 +1,68 @@
+---
+title: "decathlon_data_analysis_questions"
+author: "DC"
+date: "2023-04-10"
+output: html_document
+---
+
+# Analysis Questions
+
+```{r}
+library(tidyverse)
+
+decathlon_info <- read_csv("clean_data/clean_decathlon.csv")
+```
+## Question 1. Who had the longest long jump seen in the data?
+```{r}
+decathlon_info %>% 
+  select(name, long_jump_distance_m) %>% 
+  arrange(desc(long_jump_distance_m)) %>% 
+  head(1)
+```
+
+## Question 2. What was the average 100m time in each competition?
+```{r}
+decathlon_info %>% 
+  group_by(competition) %>% 
+  summarise(avg_100m_time_s = mean(`100m_time_s`))
+  
+```
+
+## Question 3. Who had the highest total points across both competitions?
+
+```{r}
+decathlon_info %>% 
+  select(name, total_points) %>% 
+  arrange(desc(total_points)) %>% 
+  head(1)
+```
+## Question 4. What was the shot-put scores for the top three competitors in each competition?
+
+```{r}
+decathlon_info %>% 
+  group_by(competition) %>% 
+  slice_min(n = 3, order_by = ranking) %>% 
+  select(competition, ranking, shot_put_distance_m)
+```
+
+
+
+## Question 5. What was the average points for competitors who ran the 400m in less than 50 seconds vs. those than ran 400m in more than 50 seconds?
+
+```{r}
+decathlon_info %>% 
+  filter(`400m_time_s` < 50) %>% 
+  summarise(avg_points_400m_time_less_than_50s = mean(total_points))
+
+decathlon_info %>% 
+  filter(`400m_time_s` > 50) %>% 
+  summarise(avg_points_400m_time_more_than_50s = mean(total_points))
+
+```
+```{r}
+decathlon_info %>% 
+  group_by(`400m_time_s` < 50) %>% 
+  summarise(mean(if(`400m_time_s` < 50 = TRUE)))
+```
+
+
