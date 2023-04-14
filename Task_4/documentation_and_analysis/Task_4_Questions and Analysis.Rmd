@@ -1,0 +1,381 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+
+  combined_candy_clean <- read_csv("../clean_data/combined_candy_clean.csv")
+  candy_2015_clean <- read_csv("../clean_data/candy_2015_clean.csv")
+  candy_2016_clean <- read_csv("../clean_data/candy_2016_clean.csv")
+  candy_2017_clean <- read_csv("../clean_data/candy_2017_clean.csv")
+```
+
+## Question 1
+
+What is the total number of candy ratings given across the three years. 
+(Number of candy ratings, not the number of raters. Don’t count missing values)
+
+```{r}
+combined_candy_clean %>% 
+  select(butterfinger:take_5) %>%
+  pivot_longer(cols = butterfinger:take_5) %>% 
+  summarise(total_num_of_ratings = sum(!is.na(value)))
+
+# Utilised this code for validation that my pivot longer table worked.
+# combined_candy_clean %>% 
+#   relocate(gender,country,state_province_county, .before = butterfinger) %>% 
+#   select(butterfinger:take_5) %>%
+#   pivot_longer(cols = butterfinger:take_5) %>% 
+#   group_by(value) %>% 
+#   count()
+# 
+#229481 + 264226 + 74013 = 567720
+```
+
+Answer: 
+The total number of candy ratings across the three years was 567720. 
+
+
+
+## Question 2
+
+What was the average age of people who are going out trick or treating?
+
+```{r}
+combined_candy_clean %>% 
+  select(age, trick_or_treating) %>% 
+  filter(trick_or_treating %in% "Yes") %>% 
+  summarise(trick_or_treaters_mean_age = round(mean(age, na.rm = TRUE )))
+
+# validation
+# combined_candy_clean %>% 
+#   select(age, trick_or_treating) %>% 
+#   group_by(trick_or_treating) %>% 
+#   summarise(n())
+
+```
+The average age of people going trick or treating was 35 (rounded to the nearest
+whole number). 
+
+
+## Question 3
+What was the average age of people who are not going trick or treating?
+
+```{r}
+combined_candy_clean %>% 
+  select(age, trick_or_treating) %>% 
+  filter(trick_or_treating %in% "No") %>% 
+  summarise(non_trick_or_treaters_mean_age = round(mean(age, na.rm = TRUE )))
+```
+The average age of people going trick or treating was 39 (rounded to the nearest
+whole number).
+
+
+
+## Question 4
+For each of joy, despair and meh, which candy bar received the most of these ratings? 
+
+```{r}
+ combined_candy_clean %>% 
+  select(butterfinger:take_5) %>% 
+  pivot_longer(cols = butterfinger:take_5) %>% 
+  group_by(name) %>% 
+  count(value) %>% 
+  group_by(value) %>% 
+  slice_max(n, n = 1, with_ties = FALSE)
+
+#includes only candy items that I have defined as "candy bar"
+combined_candy_clean %>% 
+  select(butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+         caramellos, snickers, dark_chocolate_hershey, heath_bar,
+         hershey_s_milk_chocolate, nestle_crunch, kinder_happy_hippo, kit_kat,
+         mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+         chick_o_sticks, three_musketeers, peanut_butter_bars, twix, coffee_crisp,
+         dove_bars, mr_goodbar, whatchamacallit_bars, take_5) %>% 
+  pivot_longer(cols = butterfinger:take_5) %>% 
+  group_by(name) %>% 
+  count(value) %>% 
+  group_by(value) %>% 
+  slice_max(n, n = 1, with_ties = FALSE)
+  
+```
+ 
+ Answer:
+ 
+ When we only look at items of candy which would be defined as a "candy bar",
+ chick_o_sticks received the most despair ratings, any_full_sized_candy_bar had
+ the most "JOY" ratings and  x100_grand_bar received the most "MEH" ratings. 
+
+## Question 5
+How many people rated Starburst as despair?
+
+```{r}
+
+combined_candy_clean %>% 
+  filter(starburst == "DESPAIR") %>% 
+  nrow()
+
+```
+Answer: 
+1990 people gave Starburst a despair rating.
+
+For the next three questions, count despair as -1, joy as +1, and meh as 0.
+
+## Question 6
+What was the most popular candy bar by this rating system for each gender in the 
+dataset ?
+
+```{r}
+combined_candy_clean %>% 
+  select(gender, butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+         caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+         hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+         mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+         chick_o_sticks, three_musketeers, peanut_butter_bars, twix, coffee_crisp,
+         dove_bars, mr_goodbar, whatchamacallit_bars, take_5) %>% 
+  pivot_longer(cols = butterfinger:take_5) %>%
+  mutate(value = case_when(value == "DESPAIR" ~ -1,
+                           value == "MEH" ~ 0,
+                           value == "JOY" ~ 1)) %>% 
+  filter(!is.na(value)) %>% 
+  group_by(gender, name) %>% 
+  summarise(rating = sum(value), count = n()) %>% 
+  arrange(gender, desc(rating), desc(count)) %>% 
+  slice_max(n = 2, order_by = rating, with_ties = FALSE) %>% 
+  select(gender, name, rating)
+
+```
+Answer: 
+The most popular candy bar for each gender category was any_full_sized_candy_bar.
+
+However if I remove any_full_sized_candy_bar from the list the most popular candy bar
+by gender was  kit_kat for females, and  for males, I'd rather not say, and NA gender categories.
+Twix was the favourite for the other gender category.
+
+```{r}
+# Please ignore this code chunk, I misread the question and did not assign the 
+# values to the ratings. This code takes the candy with the highest number of 
+# JOY ratings as being then organises by gender as required. I've left it in as 
+# it's another way to interpret the popularity of a candy from the data set. 
+# This code can be used to find the most popular candy on the list but is not 
+# specific to items classified as "Candy Bars". 
+
+# combined_candy_clean %>% 
+#   select(gender, butterfinger:take_5) %>% 
+#   pivot_longer(cols = butterfinger:take_5) %>% 
+#   filter(value == "JOY") %>% 
+#   group_by(gender, name) %>% 
+#   count(value) %>%
+#   arrange(gender, desc(n)) %>% 
+#   select(gender, name, n) %>% 
+#   group_by(gender) %>% 
+#   slice_max(n, n = 1, with_ties = FALSE)
+
+
+# #This code includes columns with items that I have defined as a "candy bar"
+# combined_candy_clean %>% 
+#   select(gender, butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+#          caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+#          hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+#          mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+#          chick_o_sticks, three_musketeers, peanut_butter_bars, twix, coffee_crisp,
+#          dove_bars, mr_goodbar, whatchamacallit_bars, take_5) %>% 
+#   pivot_longer(cols = butterfinger:take_5) %>% 
+#   filter(value == "JOY") %>% 
+#   group_by(gender, name) %>% 
+#   count(value) %>%
+#   arrange(gender, desc(n)) %>% 
+#   select(gender, name, n) %>% 
+#   group_by(gender) %>% 
+#   slice_max(n, n = 1, with_ties = FALSE)
+# 
+# 
+# #Below is the Candy bar analysis minus any_full_sized_candy_bar_column.
+# 
+# combined_candy_clean %>% 
+#   select(gender, butterfinger, x100_grand_bar,
+#          caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+#          hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+#          mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+#          chick_o_sticks, three_musketeers, peanut_butter_bars, twix, coffee_crisp,
+#          dove_bars, mr_goodbar, whatchamacallit_bars, take_5) %>% 
+#   pivot_longer(cols = butterfinger:take_5) %>% 
+#   filter(value == "JOY") %>% 
+#   group_by(gender, name) %>% 
+#   count(value) %>%
+#   arrange(gender, desc(n)) %>% 
+#   select(gender, name, n) %>% 
+#   group_by(gender) %>% 
+#   slice_max(n, n = 1, with_ties = FALSE)
+
+```
+
+
+## Question 7 
+What was the most popular candy bar in each year?
+
+```{r}
+
+#2015 answer is any full sized candy bar for all candy items.
+# candy_2015_clean %>% 
+#   select(butterfinger:york_peppermint_patties) %>% 
+#   pivot_longer(cols = butterfinger:york_peppermint_patties) %>% 
+#   mutate(value = case_when(value == "DESPAIR" ~ -1,
+#                            value == "MEH" ~ 0,
+#                            value == "JOY" ~ 1)) %>% 
+#   filter(!is.na(value)) %>%  
+#   group_by(name) %>% 
+#   summarise(rating = sum(value), count = n())  %>% 
+#   arrange(desc(rating)) %>% 
+#   head(5)
+  
+
+#2015 candy bars specific code
+candy_2015_clean %>% 
+  select(butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+         caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+         hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+         mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+         three_musketeers, peanut_butter_bars, twix) %>% 
+  pivot_longer(cols = butterfinger:twix) %>% 
+  mutate(value = case_when(value == "DESPAIR" ~ -1,
+                           value == "MEH" ~ 0,
+                           value == "JOY" ~ 1)) %>% 
+  filter(!is.na(value)) %>%  
+  group_by(name) %>% 
+  summarise(rating = sum(value), count = n())  %>% 
+  arrange(desc(rating)) %>% 
+  head(5)
+
+#2016 answer is any full sized candy bar
+# candy_2015_clean %>% 
+#   select(butterfinger:york_peppermint_patties) %>% 
+#   pivot_longer(cols = butterfinger:york_peppermint_patties) %>% 
+#   mutate(value = case_when(value == "DESPAIR" ~ -1,
+#                            value == "MEH" ~ 0,
+#                            value == "JOY" ~ 1)) %>% 
+#   filter(!is.na(value)) %>%  
+#   group_by(name) %>% 
+#   summarise(rating = sum(value), count = n())  %>% 
+#   arrange(desc(rating)) %>% 
+#   head(5)
+
+#2016 candy bars specific code
+candy_2016_clean %>% 
+  select(butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+         caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+         hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+         mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+         three_musketeers, twix, whatchamacallit_bars, mr_goodbar, dove_bars) %>% 
+  pivot_longer(cols = butterfinger:whatchamacallit_bars) %>% 
+  mutate(value = case_when(value == "DESPAIR" ~ -1,
+                           value == "MEH" ~ 0,
+                           value == "JOY" ~ 1)) %>% 
+  filter(!is.na(value)) %>%  
+  group_by(name) %>% 
+  summarise(rating = sum(value), count = n())  %>% 
+  arrange(desc(rating)) %>% 
+  head(5)
+
+#2017 answer is any full sized candy bar 
+
+# candy_2017_clean %>% 
+#   select(x100_grand_bar:york_peppermint_patties) %>% 
+#   pivot_longer(cols = x100_grand_bar:york_peppermint_patties) %>% 
+#   mutate(value = case_when(value == "DESPAIR" ~ -1,
+#                            value == "MEH" ~ 0,
+#                            value == "JOY" ~ 1)) %>% 
+#   filter(!is.na(value)) %>%  
+#   group_by(name) %>% 
+#   summarise(rating = sum(value), count = n())  %>% 
+#   arrange(desc(rating)) %>% 
+#   head(5)
+
+#2017 candy bars specific code
+candy_2017_clean %>% 
+  select(butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+         caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+         hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+         mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+         three_musketeers, twix, whatchamacallit_bars, mr_goodbar, dove_bars, 
+         coffee_crisp, take_5) %>% 
+  pivot_longer(cols = butterfinger:whatchamacallit_bars) %>% 
+  mutate(value = case_when(value == "DESPAIR" ~ -1,
+                           value == "MEH" ~ 0,
+                           value == "JOY" ~ 1)) %>% 
+  filter(!is.na(value)) %>%  
+  group_by(name) %>% 
+  summarise(rating = sum(value), count = n())  %>% 
+  arrange(desc(rating)) %>% 
+  head(5)
+
+
+```
+
+## Question 8
+What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
+
+```{r}
+# combined_candy_clean %>% 
+#   select(country, butterfinger:take_5) %>% 
+#   pivot_longer(cols = butterfinger:take_5) %>% 
+#   mutate(value = case_when(value == "DESPAIR" ~ -1,
+#                            value == "MEH" ~ 0,
+#                            value == "JOY" ~ 1)) %>% 
+#   filter(!is.na(value)) %>%  
+#   group_by(country, name) %>% 
+#   summarise(rating = sum(value), count = n())  %>% 
+#   arrange(desc(country), desc(rating)) %>% 
+#   group_by(country) %>% 
+#   slice_max(n = 1, order_by = rating, with_ties = FALSE)
+  
+  
+  
+  
+  # filter(value == "JOY") %>% 
+  # group_by(country, name) %>% 
+  # count(value) %>%
+  # arrange(country, desc(n)) %>% 
+  # select(country, name, n) %>% 
+  # group_by(country) %>% 
+  # slice_max(n, n = 1, with_ties = TRUE)
+
+# code below removes single values from analysis, this will remove some countries
+# from table.
+# combined_candy_clean %>% 
+#   select(country, butterfinger:take_5) %>% 
+#   pivot_longer(cols = butterfinger:take_5) %>% 
+#   mutate(value = case_when(value == "DESPAIR" ~ -1,
+#                            value == "MEH" ~ 0,
+#                            value == "JOY" ~ 1)) %>% 
+#   filter(!is.na(value)) %>%  
+#   group_by(country, name) %>% 
+#   summarise(rating = sum(value), count = n())  %>% 
+#   arrange(desc(country), desc(rating)) %>% 
+#   group_by(country) %>% 
+#   slice_max(n = 1, order_by = rating, with_ties = FALSE)
+
+#Code below is used for any item defined as a candy bar. 
+combined_candy_clean %>% 
+  select(country, butterfinger, x100_grand_bar, any_full_sized_candy_bar,
+         caramellos, snickers, nestle_crunch, dark_chocolate_hershey, heath_bar,
+         hershey_s_milk_chocolate, kinder_happy_hippo, kit_kat,
+         mars, reggie_jackson_bar, milky_way, tolberone_something_or_other,
+         chick_o_sticks, three_musketeers, peanut_butter_bars, twix, coffee_crisp,
+         dove_bars, mr_goodbar, whatchamacallit_bars, take_5) %>% 
+  pivot_longer(cols = butterfinger:take_5) %>% 
+  mutate(value = case_when(value == "DESPAIR" ~ -1,
+                           value == "MEH" ~ 0,
+                           value == "JOY" ~ 1)) %>% 
+  filter(!is.na(value)) %>%  
+  group_by(country, name) %>% 
+  summarise(rating = sum(value), count = n())  %>% 
+  arrange(desc(country), desc(rating)) %>% 
+  group_by(country) %>% 
+  slice_max(n = 1, order_by = rating, with_ties = FALSE)
+
+```
+

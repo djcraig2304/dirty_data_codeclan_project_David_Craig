@@ -10,7 +10,7 @@ output: html_document
 ```{r}
 library(tidyverse)
 
-decathlon_info <- read_csv("clean_data/clean_decathlon.csv")
+decathlon_info <- read_csv("../clean_data/clean_decathlon.csv")
 ```
 ## Question 1. Who had the longest long jump seen in the data?
 ```{r}
@@ -19,6 +19,9 @@ decathlon_info %>%
   arrange(desc(long_jump_distance_m)) %>% 
   head(1)
 ```
+Answer: 
+Clay has the longest long jump in the data (7.96 m).
+
 
 ## Question 2. What was the average 100m time in each competition?
 ```{r}
@@ -27,6 +30,10 @@ decathlon_info %>%
   summarise(avg_100m_time_s = mean(`100m_time_s`))
   
 ```
+Answer:
+The average 100m time in Decastar was 11.17538 and in the Olympic Games was 
+10.91571.
+
 
 ## Question 3. Who had the highest total points across both competitions?
 
@@ -36,7 +43,11 @@ decathlon_info %>%
   arrange(desc(total_points)) %>% 
   head(1)
 ```
-## Question 4. What was the shot-put scores for the top three competitors in each competition?
+Sebrle had the highest total points (8893) across both competitions.
+
+
+## Question 4. What was the shot-put scores for the top three competitors in 
+each competition?
 
 ```{r}
 decathlon_info %>% 
@@ -44,25 +55,34 @@ decathlon_info %>%
   slice_min(n = 3, order_by = ranking) %>% 
   select(competition, ranking, shot_put_distance_m)
 ```
+Answer: The shot put distance for the three top competitors is shown in the tibble
+above.
 
 
+## Question 5. What was the average points for competitors who ran the 400m in 
+less than 50 seconds vs. those than ran 400m in more than 50 seconds?
 
-## Question 5. What was the average points for competitors who ran the 400m in less than 50 seconds vs. those than ran 400m in more than 50 seconds?
+```{r}
+#First attempt at question 5 but I have revised the code below using ifelse().
+# decathlon_info %>% 
+#   filter(`400m_time_s` < 50) %>% 
+#   summarise(avg_points_400m_time_less_than_50s = mean(total_points))
+# 
+# decathlon_info %>% 
+#   filter(`400m_time_s` > 50) %>% 
+#   summarise(avg_points_400m_time_more_than_50s = mean(total_points))
+
+```
+
 
 ```{r}
 decathlon_info %>% 
-  filter(`400m_time_s` < 50) %>% 
-  summarise(avg_points_400m_time_less_than_50s = mean(total_points))
-
-decathlon_info %>% 
-  filter(`400m_time_s` > 50) %>% 
-  summarise(avg_points_400m_time_more_than_50s = mean(total_points))
-
+  mutate(`400m_category` = ifelse(`400m_time_s` < 50, "400m_time_less_than_50s",
+                                   "400m_time_more_than_50s")) %>% 
+  group_by(`400m_category`) %>% 
+  summarise(avg_total_points = mean(total_points))
 ```
-```{r}
-decathlon_info %>% 
-  group_by(`400m_time_s` < 50) %>% 
-  summarise(mean(if(`400m_time_s` < 50 = TRUE)))
-```
+Answer: The average points for competitors running 400m faster or slower than 
+50 seconds is shown in the tibble above. 
 
 

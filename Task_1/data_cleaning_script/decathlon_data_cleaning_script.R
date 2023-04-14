@@ -1,18 +1,15 @@
-#decathlon.rds cleaniig Script
+#decathlon.rds cleaning Script
 
 library(tidyverse)
 library(janitor)
-library(readr)
-library(tidyr)
-library(tibble)
-library(stringr)
 
 decathlon <- read_rds("raw_data/decathlon.rds")
 
 decathlon <- clean_names(decathlon)
 
 # changed row name with athletes name to column, made all names lower case and 
-# renamed columns to include measurement and measurement unit. 
+# renamed columns to include measurement and measurement unit s = seconds, 
+# m = metres. 
 
 clean_decathlon <- decathlon %>%
   rownames_to_column(var = "name") %>%
@@ -31,4 +28,4 @@ clean_decathlon <- decathlon %>%
          "total_points" = points
   )
 
-write.csv(clean_decathlon, "clean_decathlon.csv")
+write.csv(clean_decathlon, "clean_data/clean_decathlon.csv")

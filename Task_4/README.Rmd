@@ -1,0 +1,430 @@
+---
+title: "README"
+author: "DC"
+date: "2023-04-13"
+output: html_document
+---
+# CodeClan Dirty Data Project Task 4 - Halloween Candy Data
+
+## Introduction
+
+The survey data used in this analysis was collected from the boingboing.net 
+Halloween Candy survey in 2015, 2016, and 2017. Each year's data is stored in a 
+separate Excel file and includes ratings for various Halloween candy items based 
+on whether they evoke feelings of "JOY," "DESPAIR," or "MEH." Some items are 
+shared between all three years, while others are unique to a particular year. 
+Additionally, there are joke items included in the survey that are also rated.
+
+The data sets contain additional questions related to the participant's age, gender, 
+country of origin, and comments on the survey. Due to the nature of the survey, 
+the data set is considered "dirty" because participants could fill in any response 
+they wished for certain questions, such as age, country, and comments on 
+additional Halloween items.
+
+The primary objective of this project is to clean the "dirty" data set, make it 
+more manageable, and answer questions about the data. This project is part of the 
+CodeClan data boot camp and provides an opportunity to explore and clean a messy 
+data set using the tidyverse package in R. By analyzing the data, I hope to 
+identify trends and patterns that will provide  insights into preferences for 
+Halloween candy items.
+
+
+## Aims
+
+The aims of the task were as follows:
+
+* Clean each data set
+* Combine the 3 survey data sets
+* Answer 8 analysis questions regarding the data 
+
+
+## Data
+
+The data files `boing-boing-candy-2015.xlxs`, `boing-boing-candy-2016.xlxs` and 
+`boing-boing-candy-2017.xlxs` can be found in the project `raw_data folder`. As
+previously stated each file is real world data generated from an annual Halloween
+survey carried out in the year 2015, 2016 and 2017. 
+
+`boing-boing-candy-2015.xlxs` is an excel file containg 124 columns and 5,630 rows. 
+Each row is one individual filling out all the questions in the survery and each
+column corresponds to questions asked or categores in the survey. 
+
+`boing-boing-candy-2016.xlxs` is an excel file containing 123 columns and 1,259 
+rows. Each row is one individual filling out all the questions in the survery and each
+column corresponds to questions asked or categores in the survey. 
+
+`boing-boing-candy-2017.xlxs` is an excel file containing 120 columns and 2,460 
+rows. Each row corresponds to individual filling out all the questions in the 
+survery and each column corresponds to questions asked or categores in the survey. 
+
+It is important to note that not all survey questions or categories appear in each
+file although there are a number of common categories to each of the files.
+
+
+
+## Packages and Libraries
+
+The following packages were used to clean the data; `tidyverse`, `readr`, `janitor`,
+and `readxl`. The `tidyverse` was also used in the data analysis steps.
+
+## Data Cleaning Process
+
+An R script title `candy_data_cleaning.R` was created and saved in the
+`data_cleaning_script` folder for data cleaning and the libraries `tidyverse`, 
+`readr`, `janitor`and `readxl`were loaded into the environment using the `library()` 
+function. Note if these packages are not installedthey can be installed into the 
+console window using the `install.packages()` function.
+
+Each data set was loaded into the environment using the `read.excel()` function.
+For each individual data set I did the following cleaning below prior to combining
+the files. 
+
+### Selected Relevant Columns for Analysis
+
+For each of the data sets I used the `select()` function to pick only the columns
+I believed would be useful in the analysis, this included the numerous Halloween 
+candy names and items that were rated. For each of the survey I excluded the 
+additional comments at the end as after reviewing them some of them were not relevant
+to the questions being asked. I also used the `rename()` function to rename some
+column headings to make them more easily readable and also to put some columns
+ie the `bonkers` column from  `boing-boing-candy-2015.xlxs` to `bonkers_the_candy`
+into a format that meant it would be integrated with the corresponding cateogory on
+other data sets once they were joined together. I assigned the selected columns 
+to a new variable. 
+
+### Removed non-candy items from data sets
+
+Next again using the `select()` function,I removed items from each of the data 
+sets that were not not actually candy. My definition of the term "candy" was 
+something that was edible, sweet and made primarily of sugar. The candy also had 
+to be or currently is a real life candy and so I omitted fictional candy categories 
+such as `sweetums` and `joy_joy_mit_iodine` from the data sets.
+I have included an excel file in the project, `candy_yes_no`, 
+with a list of all the things that I considered candy from each data set in each 
+year. An additional cleaning step to tidy the column names in the data derived 
+from the `boing-boing-candy-2017.xlxs`data set was to use the regular expression
+`"q6\\_"` to remove this pattern from the column titles, again ensuring the format
+meant that common columns between data sets would be combined when data sets were 
+joined together.
+
+### Joined three data sets together
+
+To join the cleaned three data sets variables together, I performed two full joins,
+`full_join()` first to join the `candy_2015_rename_concise` and `candy_2016_rename_concise`
+variables together and then additionally join the `candy_2017_rename_concise`
+variable to the previous combined data. This returned a data set assigned the name
+`candy_2015_2016_2017` with all data combined. I chose a full join for this as 
+I did not want to lose any information from any of the data sets.
+
+### Cleaning combined data
+
+I then cleaned the combined data set, starting with the `age` column using a regex
+pattern:
+`age_pattern_extract <- "\\d+\\.?\\d*|NA"` 
+This was used in combination with the `str_extract` function toextract all numbers,
+numbers with decimals and `NAs`. 
+
+In summary the regex pattern does the following:
+ \\d+ Matches one or more digits (0-9).
+\\.? Matches an optional decimal point .
+\\d*: Matches zero or more digits after the decimal point.
+
+Next I converted anything that contained characters/letters was converted to NA 
+and then to 0 using the `as.numeric(ifelse(is.na(age), 0, age)` functions which
+returned all `NA` values as 0. 
+
+I next using `mutate()` and an `ifelse()` I converted any values in the `age` 
+that were zero or greater than 100 years to `NA` as I didn't think anyone aged 
+below this would fill in a survey or get their parents to fill out the survey. 
+Any `age` values over 100 were omitted for similar reasons. 
+One limitation here is that I could maybe have been stricter to encompass a more narrow
+age range perhaps from 10 to 80 which allow the elimination of false `age` data 
+points and better reflect the age of those filling in the survey.
+
+Again after reviewing the data I renamed and re-organised columns structure, 
+removed any additional columns missed first time around that were not candy but 
+were missed in initial clean. Note at this point I excluded the `mint_leaves` 
+column as initially I thought these may be candied mint leaves but decided to 
+remove them as description does not mention the word "candied". These steps were 
+again done using the `select()` function. At this pointI also renamed a few columns, 
+using `rename()` into a format which I found easier to read.
+
+I then used the `mutate()` and `ifelse()` function to clean the country column. 
+Here I systematically reviewed each of the variables in the `country` column and
+re-coded variables which were obvious misspellings, in different cases, 
+colloquialisms, places within a country or were written in their native tongue 
+equivalent. I also removed several variables and assigned them as `NA` as they
+did not fit with my criteria being non-nonsensical or vague.
+
+Finally using the relocate() function I reordered the columns so that all candy 
+ratings were  columns to the right of gender,country,state_province_county columns.
+All `NA` values were left in the data set as I assumed these to mean no rating had been 
+given for particular candies by certain individuals.
+
+The combined data set variable, `candy_country_cleaned` and the partially cleaned 
+individual data set variables `candy_2015_rename_concise`, `candy_2016_rename_concise`
+and `candy_2015_rename_concise` were then written as CSV files and stored in the 
+`clean_data` folder.
+
+
+
+## Analysis Questions
+
+All code and answers to the following questions alongside additional annotations 
+are available in the `Task_4_Questions_and_analysis.rmd` file stored in the 
+documentation_and_analysis folder.
+
+Below I will give a brief overview to my approach to each question using the 
+clean data files. The library used for this analysis was `tidyverse`.
+
+**Question 1: What is the total number of candy ratings given across the three years?** 
+**(Number of candy ratings, not the number of raters. Don’t count missing values)**
+
+Here I calculated the total number of candy ratings given across three years 
+by selecting the columns "butterfinger" to "take_5" from the  "combined_candy_clean" 
+data frame. Then I used the pivot_longer() function to reshape the data into a 
+longer format, and calculated the sum of non-missing values for each candy rating 
+using the `!is.na()` function. The result is a summary table with one column  which
+contains the total number of candy ratings given across the three years which was
+567720.
+
+
+**Question 2: What was the average age of people who are going out trick or treating?**
+
+I first chose the "age" and "trick_or_treating" columns from the data frame using 
+the `select()` function and then filtered the data frame to only include rows 
+where the "trick_or_treating" column has a value of "Yes" using the `filter()` function.
+I then calculated the mean age of the filtered data using the `mean()` function 
+and rounded the result to the nearest integer using the `round()` function.
+
+The resulting summary table has one column named "trick_or_treaters_mean_age", 
+which contains the mean age of trick-or-treaters who answered "Yes" to the 
+question of whether they went trick-or-treating.
+
+The mean age was 35 for trick or treaters from the data.
+
+
+**Question 3 :What was the average age of people who are not going trick or treating?**
+
+Here I followed the same approach as Question 2 except instead of filtering the 
+"trick_or_treating" column with a value of "Yes".It had a value of "No".
+
+The mean age was 39 for non - trick or treaters from the data.
+
+
+**Question 4 For each of joy, despair and meh, which candy bar received the most of these ratings?** 
+
+for this question I performed two types of analysis. 
+
+For the first analysis of the code selects the columns "butterfinger" to "take_5" using 
+the `select() function`, changes s the data into a longer format using 
+the `pivot_longer()` function. It then groups the data by the candy item name and 
+counts the number of ratings for each value of the candy rating using the count() 
+function. It then groups the data by the candy rating value and returns the row 
+with the highest count for each value using slice_max() function. It returned the 
+following table:
+
+| name<br><chr>            | value<br><chr> | n<br><int> 
+|--------------------------|----------------|-----------:|
+| gum_from_baseball_cards  | DESPAIR        |       7341 |   
+| any_full_sized_candy_bar | JOY            |       7589 |   
+| lollipops                | MEH            |       1570 |   
+| third_party_m_ms         | NA             |       8169 |
+
+
+The second part of the code selects a subset of candy items that are defined as 
+"candy bar" using the select() function. "Candy bars" come in bar form, not as 
+individual round or smaller candies. I have also include `kinder_happy_hippo`
+in the analysis as they come in mini bar for but may technically be a "biscuit".
+Again I changed the data into a longer format, grouped the data by candy item name, 
+counted the number of ratings for each value of the candy rating, groups the data 
+by the candy rating value, and returns the row with the highest count for each value.
+
+| name<br><chr>            | value<br><chr> | n<int> |   
+|--------------------------|----------------|-----------:|
+| chick_o_sticks           | DESPAIR        |       4737 |   
+| any_full_sized_candy_bar | JOY            |       7589 |   
+| x100_grand_bar           | MEH            |       1307 |
+| take_5                   | NA             |       7813 |   
+
+
+**Question 5 How many people rated Starburst as despair?**
+
+To address this question, I  filtered the `combined_candy_clean` dataset 
+to only include rows where the `starburst` column has a value of "DESPAIR" and 
+then calculates the number of rows  using the `nrow()` 
+function which corresponds to the number of Starburst despair ratings.
+
+The number of people rating `Starburst` as "DESPAIR" was 1990.
+
+For the next three questions, count despair as -1, joy as +1, and meh as 0.
+
+**Question 6 what was the most popular candy bar by this rating system for each gender in the dataset?**
+
+I first calculated the sum of candy ratings and the count of ratings for each 
+gender and candy item. I converted the candy ratings into numerical values 
+(-1 for "DESPAIR", 0 for "MEH", and 1 for "JOY") using the `mutate()` function. 
+The resulting dataset is filtered to remove any missing ratings using the `filter()` 
+function.
+
+The data was then grouped by gender and candy item using the `group_by()` function. 
+The `summarise()` function calculates the sum of ratings and the count of ratings 
+for each group. The resulting data set was sorted by gender, descending rating, and 
+descending count using `arrange()` function. The `slice_max()` function is used to 
+select the top two rated candy items for each gender based on rating, with ties 
+broken by the count of ratings.
+
+Finally, the `select()` function is used to select the columns for output, 
+which include gender, candy item name, and the total rating.
+
+This code provides a summary of the top two rated candy items for each gender,
+including the total rating calculated by adding up the numerical values of each 
+rating. I chose to display the top two values as for each gender category the
+`any_full_sized_candy_bar` was the highest rated. However if I remove 
+any_full_sized_candy_bar from the list the most popular candy bar
+by gender was  `kit_kat` for `female`, `male` , `I'd rather not say`, 
+and `NA` gender categories. `Twix` was the favourite for the `other` gender category.
+
+
+**Question 7 What was the most popular candy bar in each year?**
+
+To address this question I looked at each individual year dataframe that had been
+cleaned. These were candy_2015_rename_concise`, `candy_2016_rename_concise`
+and `candy_2015_rename_concise`. 
+
+The code analyzes candy bar ratings data for the years 2015, 2016, and 2017. 
+It selects a subset of columns and then pivots the data so that each row contains 
+the name of a candy bar and its rating. It then converts the rating values to 
+numeric values (-1 for DESPAIR, 0 for MEH, and 1 for JOY), filters out any rows 
+with missing rating values, groups the data by candy bar name, and calculates 
+the sum of ratings and the count of ratings for each group. 
+Finally, it arranges the data by descending rating and selects the top 5 candy bars. 
+The code is run separately for the years 2015, 2016, and 2017 and for any 
+full-sized candy bar and for specific candy bars. I chose to find the top 5 again
+as any_full_sized_candy_bar was the top answer for each year so thought it may 
+be useful to view the top 5. 
+
+For the 2015 data it returned the table:
+
+| name<br><chr>            | rating<br><dbl> | count<br><int> |
+|--------------------------|----------------:|---------------:|
+| name<br><chr>            | rating<br><dbl> | count<br><int> |   
+| any_full_sized_candy_bar |            4603 |           5353 |   
+| kit_kat                  |            4340 |           5340 |   
+| twix                     |            4041 |           5261 |   
+| snickers                 |            4006 |           5340 |   
+| nestle_crunch            |            3172 |           5182 |   
+
+
+
+For the 2016 data it returned the table:
+
+| name<br><chr>                | rating<br><dbl> | count<br><int> |   
+|------------------------------|----------------:|---------------:|
+| name<br><chr>                | rating<br><dbl> | count<br><int> |   
+| any_full_sized_candy_bar     |            1037 |           1242 | 
+| kit_kat                      |             920 |           1237 |   
+| twix                         |             839 |           1224 |   
+| snickers                     |             832 |           1223 |   
+| tolberone_something_or_other |             802 |           1222 |   
+
+For the 2017 data it returned the table:
+
+| name<br><chr>                | rating<br><dbl> | count<br><int> |
+|------------------------------|----------------:|---------------:|
+| any_full_sized_candy_bar     |            1542 |           1788 |  
+| kit_kat                      |            1395 |           1786 |   
+| twix                         |            1342 |           1770 |  
+| snickers                     |            1320 |           1770 |   
+| tolberone_something_or_other |            1236 |           1754 |  
+
+
+
+**Question 8 What was the most popular candy bar by this rating for people in US,Canada, UK, and all other countries?**
+
+Here I interpreted this question as wanting to show the highest rated candy bar in 
+all countries.
+
+First, I selected specific columns relating to "candy bar" from the data set using 
+the `select()` function. Then, it uses `pivot_longer()` to change the data set 
+from wide to long format, with each candy type being a separate row.
+
+I used  mutate to recode the ratings (which are strings) to numeric values of 
+-1, 0, and 1 and filtered out any rows where the rating value is missing.
+
+The data was then grouped by country and candy type using `group_by()`, and 
+I calculated the sum of ratings and the number of ratings for each group using 
+`summarise()`. It arranges the data by country and rating in descending order, 
+and then selected the top rated candies for each country using `slice_max()`.
+
+This returned the following table to view all the top rated candy bars in each country.
+
+| country<br><chr>          | name<br><chr>               | rating<br><dbl> | count<br><int>                
+|--------------------------|------------------------------|-----------------|----------------|
+| country<br><chr>         | name<br><chr>                | rating<br><dbl> | count<br><int> |  
+| Australia                | any_full_sized_candy_bar     |               6 |              6 |   
+| Austria                  | any_full_sized_candy_bar     |               1 |              1 |   
+| Belgium                  | dark_chocolate_hershey       |               1 |              1 |   
+| Brasil                   | any_full_sized_candy_bar     |               1 |              1 |   
+| Canada                   | any_full_sized_candy_bar     |             251 |            274 |   
+| China                    | any_full_sized_candy_bar     |               2 |              2 |   
+| Costa Rica               | any_full_sized_candy_bar     |               1 |              1 |   
+| Croatia                  | any_full_sized_candy_bar     |               1 |              1 |   
+| Denmark                  | any_full_sized_candy_bar     |               2 |              2 |   
+| Finland                  | any_full_sized_candy_bar     |               1 |              1 |   
+| France                   | milky_way                    |               5 |              6 |   
+| Germany                  | any_full_sized_candy_bar     |              10 |             11 |   
+| Greece                   | abstained_from_m_ming        |               1 |              1 |   
+| Hungary                  | caramellos                   |               1 |              1 |   
+| Iceland                  | any_full_sized_candy_bar     |               1 |              1 |   
+| Ireland                  | any_full_sized_candy_bar     |               3 |              3 |   
+| Japan                    | kit_kat                      |               7 |              7 |   
+| Kenya                    | any_full_sized_candy_bar     |               1 |              1 |   
+| Mexico                   | dark_chocolate_hershey       |               5 |              5 |   
+| New Zealand              | kit_kat                      |               4 |              4 |   
+| Panama                   | any_full_sized_candy_bar     |               1 |              1 |   
+| Philippines              | butterfinger                 |               1 |              1 |   
+| Portugal                 | any_full_sized_candy_bar     |               1 |              1 |   
+| Singapore                | any_full_sized_candy_bar     |               1 |              1 |   
+| South Africa             | any_full_sized_candy_bar     |               1 |              1 |   
+| South Korea              | butterfinger                 |               4 |              4 |   
+| Spain                    | any_full_sized_candy_bar     |               2 |              2 |   
+| Sweden                   | any_full_sized_candy_bar     |               1 |              1 |   
+| Switzerland              | any_full_sized_candy_bar     |               3 |              3 |   
+| Taiwan                   | any_full_sized_candy_bar     |               1 |              1 |   
+| The Netherlands          | tolberone_something_or_other |               7 |              7 |   
+| UAE                      | bottle_caps                  |               1 |              1 |   
+| United States Of America | any_full_sized_candy_bar     |               1 |              1 |   
+| United Kingdom           | any_full_sized_candy_bar     |              32 |             39 |   
+| United States Of America | any_full_sized_candy_bar     |            2169 |           2560 |   
+| NA                       | any_full_sized_candy_bar     |            4664 |           5429 |   
+  
+
+
+
+## Conclusions
+
+In conclusion, I performed cleaning of the three Halloween Candy real world data
+sets and was able to use the newly cleaned data to gain further insights into the
+data and answer each of the analysis questions. 
+The data cleaning report for the Halloween candy data set has highlighted to me the 
+importance of thorough and systematic cleaning in ensuring the accuracy and 
+reliability of the data. Through  examination and manipulation of the data,
+I was able to identify and address various issues such as inconsistencies, 
+and errors that could have  impacted the analysis and interpretation of the data.
+However, some limitations to my cleaning and analysisremain such as the removal 
+of the additional comments columns which may provide further candy ratings which 
+could be added to the data set in the future. Also during the cleaning process 
+when I removed character values from the age column some data may have been lost 
+there if ages were written in characters rather than numbers, therefore it may be
+important to further analyse the `age`column and gather a more comprehensive 
+breakdown of these character inputs. To improve my code in the future I would also
+write functions for certain parts of the cleaning script when performing the same 
+type of cleaning on each data set, however, due to time constraints I was unable to
+do this as part the week long project. A function would have also been useful when
+answering Question 6 running simialr analysis on 3 different data sets. 
+An important outcome of this data cleaning challenge was that it has greatly 
+increased by confidence in my ability to analyse and clean a "dirty" data set and
+has further enhanced my ability to utilise the `tidverse` package in R for data 
+cleaning and analysis tasks.
+
