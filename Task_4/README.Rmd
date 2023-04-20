@@ -72,7 +72,7 @@ and `readxl`. The `tidyverse` was also used in the data analysis steps.
 An R script title `candy_data_cleaning.R` was created and saved in the
 `data_cleaning_script` folder for data cleaning and the libraries `tidyverse`, 
 `readr`, `janitor`and `readxl`were loaded into the environment using the `library()` 
-function. Note if these packages are not installedthey can be installed into the 
+function. Note if these packages are not installed they can be installed into the 
 console window using the `install.packages()` function.
 
 Each data set was loaded into the environment using the `read.excel()` function.
